@@ -18,33 +18,36 @@ app.use((req, res) => {
 });
 
 module.exports = async function (context, req) {
-  // Mock Express res object
+  context.log(`HTTP ${req.method} ${req.url}`);
+
+  // Mock Express response
   const res = {
     statusCode: 200,
     headers: { "Content-Type": "application/json" },
     body: null,
-    setHeader: (key, value) => { res.headers[key] = value; },
-    status: (code) => { res.statusCode = code; return res; },
-    json: (obj) => { res.body = JSON.stringify(obj); }
+    setHeader(key, value) { this.headers[key] = value; },
+    status(code) { this.statusCode = code; return this; },
+    json(obj) { this.body = JSON.stringify(obj); },
+    end() { /* no-op */ }
   };
 
-  // Mock Express req object
+  // Mock Express request
   const expressReq = {
     method: req.method,
     url: req.url,
     originalUrl: req.url,
-    headers: req.headers,
+    headers: req.headers || {},
     query: req.query || {},
     body: req.body || {}
   };
 
-  // Run Express app
-  await new Promise((resolve) => {
-    app(expressReq, res);
-    resolve();
+  // Run Express and wait for it to call `next()`
+  await new Promise((resolve, reject) => {
+    const next = (err) => (err ? reject(err) : resolve());
+    app(expressReq, res, next); // Express calls `next()` when done
   });
 
-  // Send to Azure
+  // Send response to Azure
   context.res = {
     status: res.statusCode,
     headers: res.headers,
