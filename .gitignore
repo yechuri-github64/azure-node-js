@@ -1,0 +1,13 @@
+# Ignore build artifacts
+publish/
+bin/
+obj/
+.vs/
+local.settings.json
+*.user
+*.suo
+*.dll
+*.pdb
+*.exe
+*.log
+
